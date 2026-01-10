@@ -31,3 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
+/app.log
+/app.log.2026-01-10.0.gz
