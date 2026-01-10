@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: valuable-one-api
+  profiles:
+    active: dev
+
+
+# swagger configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  show-actuator: true
+
+# logging configuration
+logging:
+  level:
+    root: INFO
+    com.valuable: DEBUG
+  file:
+    name: app.log
