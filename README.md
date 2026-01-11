@@ -46,3 +46,4 @@ If OpenAPI is integrated:
 ```bash
 URL: http://localhost:8080/swagger-ui.html
 ```
+<img width="2559" height="1361" alt="image" src="https://github.com/user-attachments/assets/cb13dd39-5776-437a-910a-b0e4afa8f014" />
