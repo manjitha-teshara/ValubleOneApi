@@ -57,9 +57,15 @@ public class HomeLoanServiceImpl implements HomeLoanService {
 
     @Override
     public HomeLoanResponse createHomeLoan(HomeLoanRequest request) {
+        log.info("Creating home loan for customerNic={}", request.getCustomerNic());
+
         CustomerEntity customer = customerService.getCustomer(request.getCustomerNic());
         HomeLoanEntity entity = mapper.toEntity(request, customer);
-        return mapper.toResponse(loanRepository.save(entity));
+        HomeLoanEntity saved = loanRepository.save(entity);
+
+        log.info("Home loan created. loanRef={}", saved.getLoanReference());
+
+        return mapper.toResponse(saved);
     }
 
 
@@ -67,7 +73,7 @@ public class HomeLoanServiceImpl implements HomeLoanService {
     @Transactional
     @Retry(name = "releaseLoanRetry", fallbackMethod = "releaseLoanFallback")
     @CircuitBreaker(name = "releaseLoanCircuitBreaker", fallbackMethod = "releaseLoanFallback")
-    public void releaseLoan(LoanReleaseRequest request) throws ExternalServiceException{
+    public void releaseLoan(LoanReleaseRequest request) {
 
         log.info("Starting loan release. loanRef={}", request.getLoanNumber());
 
@@ -96,9 +102,8 @@ public class HomeLoanServiceImpl implements HomeLoanService {
                 "Loan release failed. loanRef={} reason={}",
                 request.getLoanNumber(), t.getMessage(), t);
 
-        //  publish event to Kafka
+        //  can publish event to Kafka
 
-        //still not able to success
         throw new ExternalServiceException(
                 "Bank transfer failed. Please try again later."
         );
@@ -107,6 +112,8 @@ public class HomeLoanServiceImpl implements HomeLoanService {
     @Override
     @Transactional
     public void updateLoanStatus(String loanReference, String status) {
+        log.info("Updating loan status. loanRef={} newStatus={}", loanReference, status);
+
         HomeLoanEntity loan = loanRepository
                 .findByLoanReference(loanReference)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
@@ -119,6 +126,8 @@ public class HomeLoanServiceImpl implements HomeLoanService {
     @Override
     @Transactional
     public void updateRequestedAmount(String loanReference, Double requestedAmount) {
+        log.info("Updating requested amount. loanRef={} amount={}", loanReference, requestedAmount);
+
         HomeLoanEntity loan = loanRepository
                 .findByLoanReference(loanReference)
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
