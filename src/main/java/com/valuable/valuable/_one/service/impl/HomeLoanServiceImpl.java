@@ -11,6 +11,8 @@ import com.valuable.valuable._one.mapper.HomeLoanMapper;
 import com.valuable.valuable._one.repository.HomeLoanRepository;
 import com.valuable.valuable._one.service.CustomerService;
 import com.valuable.valuable._one.service.HomeLoanService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -57,14 +59,15 @@ public class HomeLoanServiceImpl implements HomeLoanService {
 
     @Override
     @Transactional
+    @Retry(name = "releaseLoanRetry", fallbackMethod = "releaseLoanFallback")
+    @CircuitBreaker(name = "releaseLoanCircuitBreaker", fallbackMethod = "releaseLoanFallback")
     public void releaseLoan(LoanReleaseRequest request) {
 
         HomeLoanEntity loan = loanRepository
                 .findByLoanReference(request.getLoanNumber())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Loan not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
 
-        // external bank transfer via WebClient
+        // external bank transfer request
         webClient.post()
                 .uri("https://bank-api.bank.com/transfer")
                 .bodyValue(request)
@@ -74,8 +77,7 @@ public class HomeLoanServiceImpl implements HomeLoanService {
 
         // update loan status
         loan.setStatus(LoanStatus.DISBURSED);
-
-        loanRepository.save(loan); // persist status update
+        loanRepository.save(loan);
     }
 
     @Override

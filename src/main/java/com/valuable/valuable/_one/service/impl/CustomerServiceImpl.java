@@ -3,6 +3,7 @@ package com.valuable.valuable._one.service.impl;
 import com.valuable.valuable._one.domain.dto.CustomerRequest;
 import com.valuable.valuable._one.domain.dto.CustomerResponse;
 import com.valuable.valuable._one.domain.entity.CustomerEntity;
+import com.valuable.valuable._one.exception.ResourceNotFoundException;
 import com.valuable.valuable._one.mapper.CustomerMapper;
 import com.valuable.valuable._one.repository.CustomerRepository;
 import com.valuable.valuable._one.service.CustomerService;
@@ -39,6 +40,8 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Cacheable(value = "customers", key = "#nic")
     public CustomerEntity getCustomer(String nic) {
-        return repository.getCustomerByNic(nic);
+        return repository.findByNic(nic)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Customer not found for NIC: " + nic));
     }
 }
