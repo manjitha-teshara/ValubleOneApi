@@ -6,6 +6,7 @@ import com.valuable.valuable._one.domain.dto.LoanReleaseRequest;
 import com.valuable.valuable._one.domain.entity.CustomerEntity;
 import com.valuable.valuable._one.domain.entity.HomeLoanEntity;
 import com.valuable.valuable._one.domain.enums.LoanStatus;
+import com.valuable.valuable._one.exception.ExternalServiceException;
 import com.valuable.valuable._one.exception.ResourceNotFoundException;
 import com.valuable.valuable._one.mapper.HomeLoanMapper;
 import com.valuable.valuable._one.repository.HomeLoanRepository;
@@ -14,6 +15,8 @@ import com.valuable.valuable._one.service.HomeLoanService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,9 @@ import java.math.BigDecimal;
 
 @Service
 public class HomeLoanServiceImpl implements HomeLoanService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(HomeLoanServiceImpl.class);
 
     private final HomeLoanRepository loanRepository;
     private final WebClient webClient;
@@ -61,12 +67,14 @@ public class HomeLoanServiceImpl implements HomeLoanService {
     @Transactional
     @Retry(name = "releaseLoanRetry", fallbackMethod = "releaseLoanFallback")
     @CircuitBreaker(name = "releaseLoanCircuitBreaker", fallbackMethod = "releaseLoanFallback")
-    public void releaseLoan(LoanReleaseRequest request) {
+    public void releaseLoan(LoanReleaseRequest request) throws ExternalServiceException{
+
+        log.info("Starting loan release. loanRef={}", request.getLoanNumber());
 
         HomeLoanEntity loan = loanRepository
                 .findByLoanReference(request.getLoanNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Loan not found"));
-
+        log.info("Calling bank transfer API. loanRef={}", request.getLoanNumber());
         // external bank transfer request
         webClient.post()
                 .uri("https://bank-api.bank.com/transfer")
@@ -78,6 +86,22 @@ public class HomeLoanServiceImpl implements HomeLoanService {
         // update loan status
         loan.setStatus(LoanStatus.DISBURSED);
         loanRepository.save(loan);
+
+        log.info("Loan released successfully. loanRef={}", request.getLoanNumber());
+    }
+
+    public void releaseLoanFallback(LoanReleaseRequest request, Throwable t) {
+
+        log.error(
+                "Loan release failed. loanRef={} reason={}",
+                request.getLoanNumber(), t.getMessage(), t);
+
+        //  publish event to Kafka
+
+        //still not able to success
+        throw new ExternalServiceException(
+                "Bank transfer failed. Please try again later."
+        );
     }
 
     @Override
