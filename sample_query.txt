@@ -1,0 +1,27 @@
+
+Results are ordered by the loan approval date in ascending order, so the earliest approved loans appear first.
+
+
+SELECT
+    c.id,
+    c.full_name,
+    c.nic,
+    hl.loan_reference,
+    hl.status
+FROM customers c
+LEFT JOIN home_loans hl
+    ON hl.customer_id = c.id and status="APPROVED" order by approved_at asc;
+
+
+
+This query finds the second highest requested loan amount from the home_loans table.
+If multiple loans have the same amount, they are treated as one level, and duplicates are allowed in the result.
+
+SELECT requested_amount
+FROM (
+    SELECT
+        requested_amount,
+        DENSE_RANK() OVER (ORDER BY requested_amount DESC) AS rnk
+    FROM home_loans
+) t
+WHERE rnk = 2;
