@@ -10,6 +10,12 @@ public class HomeLoanRequest {
 
         private BigDecimal requestedAmount;
 
+    public HomeLoanRequest(String loanReference, String customerNic, BigDecimal requestedAmount) {
+        this.loanReference = loanReference;
+        this.customerNic = customerNic;
+        this.requestedAmount = requestedAmount;
+    }
+
     public String getLoanReference() {
         return loanReference;
     }
