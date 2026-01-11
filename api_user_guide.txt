@@ -1,0 +1,40 @@
+https://.postman.co/workspace/Eclipseta~333868ed-b243-489a-92c4-d86119107fe2/collection/18903250-51a3ae64-dded-4524-9cfe-b21de6afa416?action=share&creator=18903250&active-environment=18903250-86a306d8-7ed8-4f47-bdb6-7e771135cc8d
+
+
+API User Guide (Steps)
+
+1. Create customer
+
+postman request POST 'http://localhost:8080/v1/api/customers' \
+  --header 'Content-Type: application/json' \
+  --body '{
+  "nic": "12871812",
+  "fullName": "Manjitha Teshara"
+}'
+
+
+
+2. Create Home Loans
+
+postman request POST 'http://localhost:8080/v1/api/home-loans' \
+  --header 'Content-Type: application/json' \
+  --body '{
+    "loanReference":"HL-10002",
+    "customerNic":"12871812",
+    "requestedAmount": 129012
+}'
+
+
+3. Change Loan Status
+
+postman request PATCH 'http://localhost:8080/v1/api/home-loans/HL-10002/status?status=APPROVED'
+
+
+4. Request Amount Change
+
+postman request PATCH 'http://localhost:8080/v1/api/home-loans/HL-10002/requested-amount?requestedAmount=7500000'
+
+
+5. Get All Home Loan
+
+postman request 'http://localhost:8080/v1/api/home-loans?reference=HL&page=0&size=10'
